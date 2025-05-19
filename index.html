@@ -141,6 +141,49 @@
             border: 1px solid #d4c9a8;
             display: none;
         }
+        
+        .additional-sections {
+            margin-top: 30px;
+            border-top: 1px dashed #d4c9a8;
+            padding-top: 20px;
+        }
+        
+        .emotion-map {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .emotion-chart {
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 15px;
+        }
+        
+        .emotion-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .emotion-tag {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            color: white;
+        }
+        
+        .cultural-perspective, .related-patterns {
+            padding: 15px;
+            background-color: #f0e6d2;
+            border-left: 3px solid #8b4513;
+            margin-bottom: 25px;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
 
         .result-title {
             color: #8b4513;
@@ -284,6 +327,22 @@
             
             <h3 class="section-title">梦境关键符号</h3>
             <div class="dream-symbols" id="dreamSymbols"></div>
+            
+            <div class="additional-sections">
+                <h3 class="section-title">情绪映射</h3>
+                <div class="emotion-map" id="emotionMap">
+                    <div class="emotion-chart">
+                        <canvas id="emotionChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="emotion-legend" id="emotionLegend"></div>
+                </div>
+                
+                <h3 class="section-title">历史文化视角</h3>
+                <div class="cultural-perspective" id="culturalPerspective"></div>
+                
+                <h3 class="section-title">相关梦境模式</h3>
+                <div class="related-patterns" id="relatedPatterns"></div>
+            </div>
         </div>
         
         <div class="footer">
@@ -291,39 +350,59 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // 梦境解析数据库
         const dreamSymbols = {
-            "飞翔": "代表自由、超越限制的渴望，或者对逃避现实的期望",
-            "掉落": "可能表示对失控的恐惧，或者在现实生活中感到不安全",
-            "追逐": "可能反映你在逃避某种压力或责任",
-            "迷路": "表示在生活中感到迷茫，不确定方向",
-            "考试": "反映对表现和评价的焦虑",
-            "牙齿掉落": "可能与自信心、形象或沟通问题有关",
-            "水": "象征情感状态，平静的水代表平和，汹涌的水代表情绪波动",
-            "蛇": "可能代表智慧、转变，或者潜在的威胁",
-            "死亡": "通常象征着转变、结束和新的开始，而非实际死亡",
-            "婴儿": "代表新的开始、创造力或责任",
-            "房子": "象征自我，不同房间可能代表人格的不同方面",
-            "车辆": "代表你在生活中的前进方向和控制感",
-            "动物": "通常代表本能或特定性格特征",
-            "裸体": "可能反映脆弱感或对暴露真实自我的恐惧",
-            "名人": "可能代表你渴望拥有的特质",
-            "食物": "可能与情感满足或精神滋养有关",
-            "大海": "象征潜意识、深层情感或未知领域",
-            "山": "代表挑战、成就或人生目标",
-            "天空": "象征可能性、自由和精神层面",
-            "黑暗": "可能代表未知、恐惧或潜意识",
-            "光明": "象征希望、启示或解决方案",
-            "钱": "可能与价值感、自尊或安全感有关",
-            "朋友": "反映社交关系或自我的不同方面",
-            "家人": "与根源、安全感和核心价值观有关",
-            "怪物": "可能代表内心恐惧或压抑的情感",
-            "战争": "可能象征内心冲突或外部压力",
-            "病毒": "可能代表担忧、恐惧或感觉受到威胁",
-            "口罩": "可能象征隐藏真实自我或保护自己",
-            "电脑": "可能与工作压力、信息过载或现代生活有关",
-            "手机": "可能反映沟通需求或对连接的渴望"
+            "飞翔": "代表自由、超越限制的渴望，或者对逃避现实的期望。在东方文化中，飞翔常被视为精神升华的象征，而在西方心理学中则可能暗示对自主权的追求。",
+            "掉落": "可能表示对失控的恐惧，或者在现实生活中感到不安全。这种梦境在人生转变期特别常见，反映了对未知的焦虑。",
+            "追逐": "可能反映你在逃避某种压力或责任。被追逐时的情绪（恐惧或兴奋）提供了重要线索，表明你对这种压力的真实态度。",
+            "迷路": "表示在生活中感到迷茫，不确定方向。迷路的环境（森林、城市、迷宫等）可能暗示了困扰你的具体领域。",
+            "考试": "反映对表现和评价的焦虑，可能源于工作压力、社会期望或自我要求。考试内容往往与你当前面临的挑战相关。",
+            "牙齿掉落": "可能与自信心、形象或沟通问题有关。在许多文化中，这也被视为对衰老或失去吸引力的恐惧。",
+            "水": "象征情感状态，平静的水代表平和，汹涌的水代表情绪波动。水的清澈度可能反映你对自己情感的理解程度。",
+            "蛇": "可能代表智慧、转变，或者潜在的威胁。在不同文化中，蛇有着丰富的象征意义，从诱惑（西方）到再生（东方）不等。",
+            "死亡": "通常象征着转变、结束和新的开始，而非实际死亡。梦见他人死亡可能反映你与该人关系的变化或对失去联系的恐惧。",
+            "婴儿": "代表新的开始、创造力或责任。婴儿的状态（健康、哭泣、微笑等）可能反映你对新事物的态度。",
+            "房子": "象征自我，不同房间可能代表人格的不同方面。地下室常代表潜意识，阁楼可能象征记忆或抱负，厨房则与滋养有关。",
+            "车辆": "代表你在生活中的前进方向和控制感。车辆的类型、速度和状况都提供了关于你如何看待自己人生旅程的线索。",
+            "动物": "通常代表本能或特定性格特征。每种动物都有其独特象征：狼可能代表独立或野性，猫可能象征神秘或优雅。",
+            "裸体": "可能反映脆弱感或对暴露真实自我的恐惧。在公共场合裸体的梦境常与社交焦虑或担心被评判有关。",
+            "名人": "可能代表你渴望拥有的特质，或者你认为自己缺乏的品质。梦中的名人往往是你潜意识投射的象征。",
+            "食物": "可能与情感满足或精神滋养有关。特定食物可能有其独特含义：甜食可能代表即时满足，健康食品可能象征自我关爱。",
+            "大海": "象征潜意识、深层情感或未知领域。海洋状态（平静、风暴等）反映了你对自己深层情感的感受。",
+            "山": "代表挑战、成就或人生目标。攀登山峰象征克服困难，山顶则代表成功和视野开阔。",
+            "天空": "象征可能性、自由和精神层面。天空的状态（晴朗、多云、风暴等）可能反映你对未来的展望。",
+            "黑暗": "可能代表未知、恐惧或潜意识。在黑暗中感到舒适可能表示你正在接受自己的阴暗面或未知部分。",
+            "光明": "象征希望、启示或解决方案。突然的光亮可能代表顿悟或新的理解。",
+            "钱": "可能与价值感、自尊或安全感有关。失去或找到钱的梦境可能反映你对自身价值的看法变化。",
+            "朋友": "反映社交关系或自我的不同方面。梦中的朋友互动可能代表你内心不同部分之间的对话。",
+            "家人": "与根源、安全感和核心价值观有关。家庭成员在梦中可能代表你性格的不同方面或早期形成的信念。",
+            "怪物": "可能代表内心恐惧或压抑的情感。怪物的具体形态和行为可能提供关于你具体恐惧的线索。",
+            "战争": "可能象征内心冲突或外部压力。参与战争的角色（士兵、平民、领导者）可能反映你在冲突中的自我定位。",
+            "病毒": "可能代表担忧、恐惧或感觉受到威胁。这种梦境可能反映对健康、关系或社会稳定性的焦虑。",
+            "口罩": "可能象征隐藏真实自我或保护自己。戴或摘口罩的行为可能反映你对真实性和社交形象的态度。",
+            "电脑": "可能与工作压力、信息过载或现代生活有关。电脑故障可能象征沟通障碍或感到无法处理信息。",
+            "手机": "可能反映沟通需求或对连接的渴望。丢失手机的梦境常与担心失去联系或社交焦虑有关。",
+            "花": "象征美丽、成长、短暂和生命周期。不同的花有不同的象征意义，如玫瑰代表爱情，百合象征纯洁。",
+            "树": "代表个人成长、家族联系或生命力。树的状态（茂盛、枯萎、结果等）可能反映你对自身发展的感受。",
+            "门": "象征机会、选择或生活的转变点。锁住的门可能代表错失的机会，而开放的门则暗示新的可能性。",
+            "桥": "代表过渡、连接或克服障碍。桥的状态和你穿越的感受可能反映你对生活变化的态度。",
+            "镜子": "与自我认知、反思和真实性有关。破碎的镜子可能象征扭曲的自我形象或身份危机。",
+            "书": "象征知识、智慧或未讲述的故事。在梦中阅读或发现书籍可能代表对新见解的渴望。",
+            "钥匙": "代表解决方案、机会或获取新领域的能力。丢失钥匙可能反映对错失机会的焦虑。",
+            "时钟": "与时间意识、压力或生命有限性有关。停止的时钟可能象征对时间流逝的担忧或希望某一刻永恒。",
+            "火": "可能代表激情、转变、净化或破坏。火的状态（受控或失控）反映了你对这些能量的管理感。",
+            "雨": "象征情感释放、净化或忧郁。暴风雨可能代表情感爆发，而温和的雨则可能象征治愈。",
+            "雪": "与纯洁、寒冷情感或生活暂停有关。在雪中的体验可能反映你对情感距离或新开始的态度。",
+            "飞机": "代表远大目标、快速进展或视角转变。飞机故障可能象征对计划失控的恐惧。",
+            "学校": "与学习、社会规范或过去经历有关。回到学校的梦境常反映对能力或准备不足的焦虑。",
+            "医院": "象征治愈、脆弱或对健康的关注。在医院的角色（病人、医生、访客）可能反映你对自身或他人健康的态度。",
+            "音乐": "与情感表达、和谐或生活节奏有关。特定的音乐或乐器可能与特定记忆或情感相连。",
+            "舞蹈": "代表自我表达、喜悦或与他人的和谐。舞蹈的流畅度可能反映你的情感自由度。",
+            "迷宫": "象征复杂问题、困惑或寻找方向。在迷宫中的体验反映了你面对生活复杂性的感受。",
+            "宝藏": "与内在价值、未实现潜力或重要发现有关。寻找宝藏可能象征自我探索之旅。",
+            "外星人": "可能代表陌生感、不理解或与主流格格不入。与外星人的互动可能反映你对不同或未知的态度。"
         };
 
         // 解析梦境的函数
@@ -342,23 +421,60 @@
                         }
                     }
                     
-                    // 如果没有找到任何符号，提供一个通用解释
+                    // 如果没有找到任何符号，提供一个详细的通用解释
                     if (foundSymbols.length === 0) {
-                        const generalAnalysis = "你的梦境似乎包含了一些非常个人化的元素。梦境通常反映我们的潜意识思想、情感和日常经历。考虑一下最近发生在你生活中的事件，以及它们如何影响你的情绪状态。";
+                        const generalAnalysis = `
+                            <p>你的梦境似乎包含了一些非常个人化的元素。梦境通常反映我们的潜意识思想、情感和日常经历。考虑一下最近发生在你生活中的事件，以及它们如何影响你的情绪状态。</p>
+                            
+                            <p>从心理学角度来看，梦境可能是大脑处理和整合信息的方式。你的这个梦可能在帮助你：</p>
+                            
+                            <ul>
+                                <li>处理未解决的情感或冲突</li>
+                                <li>整合新的经验和记忆</li>
+                                <li>探索创造性的解决方案</li>
+                                <li>表达潜意识中的愿望或恐惧</li>
+                            </ul>
+                            
+                            <p>建议你思考以下问题：</p>
+                            <ol>
+                                <li>梦中的场景是否让你想起生活中的某些情境？</li>
+                                <li>梦中的情绪与你最近的情绪状态有何关联？</li>
+                                <li>梦境中有没有反复出现的主题或模式？</li>
+                            </ol>
+                            
+                            <p>记录梦境是很好的习惯，它可以帮助你发现潜意识中的模式和主题，从而更好地理解自己。</p>
+                        `;
                         
                         resolve({
                             analysis: generalAnalysis,
-                            symbols: ["个人元素", "潜意识", "情感反映"]
+                            symbols: ["个人元素", "潜意识", "情感反映", "记忆整合", "创造性思维"]
                         });
                         return;
                     }
                     
-                    // 根据找到的符号生成解析
-                    let analysis = `你的梦境中出现了${foundSymbols.join("、")}等元素。\n\n`;
+                    // 根据找到的符号生成更详细的解析
+                    let analysis = `<p>你的梦境中出现了<span style="color:#8b4513;font-weight:600">${foundSymbols.join("、")}</span>等关键元素。以下是对这些梦境符号的详细解析：</p>\n\n`;
                     analysis += symbolMeanings.join("\n\n");
                     
-                    // 添加一些个性化的解释
-                    analysis += "\n\n这些符号组合在一起，可能反映了你当前的心理状态和情感需求。梦境是潜意识的表达，考虑这些象征如何与你的现实生活产生共鸣。";
+                    // 添加更丰富的个性化解释
+                    analysis += `
+                        <h4 style="color:#8b4513;margin-top:20px">综合分析</h4>
+                        <p>这些符号组合在一起，可能反映了你当前的心理状态和情感需求。梦境是潜意识的表达，考虑这些象征如何与你的现实生活产生共鸣。</p>
+                        
+                        <h4 style="color:#8b4513;margin-top:20px">可能的心理状态</h4>
+                        <p>基于你梦中的符号，你可能正在经历：</p>
+                        <ul>
+                            ${generatePsychologicalState(foundSymbols)}
+                        </ul>
+                        
+                        <h4 style="color:#8b4513;margin-top:20px">建议</h4>
+                        <p>考虑以下方式来回应你的梦境信息：</p>
+                        <ol>
+                            ${generateSuggestions(foundSymbols)}
+                        </ol>
+                        
+                        <p style="margin-top:20px;font-style:italic">记住，梦境解析是一门主观的艺术，最终的理解应该基于你自己的生活背景和个人经历。</p>
+                    `;
                     
                     resolve({
                         analysis: analysis,
@@ -367,7 +483,438 @@
                 }, 2000); // 2秒延迟模拟处理时间
             });
         }
+        
+        // 根据梦境符号生成可能的心理状态
+        function generatePsychologicalState(symbols) {
+            const states = {
+                "飞翔": "对自由和超越限制的渴望",
+                "掉落": "对某种情况失去控制的焦虑",
+                "追逐": "面对压力或责任时的紧张感",
+                "迷路": "在人生道路上的迷茫或不确定感",
+                "考试": "对自我评价和外界期望的焦虑",
+                "牙齿掉落": "对自信或个人形象的担忧",
+                "水": "情绪波动或内心深处的感受",
+                "蛇": "面对变化或潜在威胁的警觉",
+                "死亡": "正在经历某种重大转变或结束",
+                "婴儿": "新想法或项目的萌芽阶段",
+                "房子": "对自我认知和内心世界的探索",
+                "车辆": "对人生方向的思考和掌控欲",
+                "动物": "本能反应或特定性格特质的显现",
+                "裸体": "脆弱感或对真实自我的不安",
+                "名人": "对某种特质或成就的向往",
+                "食物": "对情感或精神满足的需求",
+                "大海": "面对广阔未知或深层情感的探索",
+                "山": "面对挑战或追求目标的决心",
+                "天空": "思想开放和可能性的扩展",
+                "黑暗": "面对未知或内心恐惧的过程",
+                "光明": "寻找希望或解决方案的意愿",
+                "钱": "对价值感或安全感的关注",
+                "朋友": "社交需求或自我不同方面的整合",
+                "家人": "对根源和核心价值观的思考",
+                "怪物": "面对内心恐惧或压抑情感的挣扎",
+                "战争": "内心冲突或外部压力的体现",
+                "病毒": "对威胁或不确定性的担忧",
+                "口罩": "保护自我或隐藏真实感受的倾向",
+                "电脑": "信息处理或现代生活压力的反映",
+                "手机": "对沟通和连接的需求或焦虑"
+            };
+            
+            let result = "";
+            let usedStates = [];
+            
+            // 从出现的符号中选择心理状态
+            for (const symbol of symbols) {
+                if (states[symbol] && !usedStates.includes(states[symbol])) {
+                    result += `<li>${states[symbol]}</li>`;
+                    usedStates.push(states[symbol]);
+                }
+            }
+            
+            // 如果没有匹配到足够的状态，添加一些通用的
+            if (usedStates.length < 3) {
+                const genericStates = [
+                    "对当前生活状况的反思",
+                    "潜意识中的创造性思维过程",
+                    "对过去经历的情感处理",
+                    "对未来可能性的探索",
+                    "内心冲突的表现"
+                ];
+                
+                for (const state of genericStates) {
+                    if (usedStates.length >= 3) break;
+                    if (!usedStates.includes(state)) {
+                        result += `<li>${state}</li>`;
+                        usedStates.push(state);
+                    }
+                }
+            }
+            
+            return result;
+        }
+        
+        // 根据梦境符号生成建议
+        function generateSuggestions(symbols) {
+            const suggestions = {
+                "飞翔": "寻找生活中能给你自由感的活动或爱好",
+                "掉落": "识别生活中让你感到失控的因素，尝试建立更多掌控感",
+                "追逐": "反思你可能在逃避的责任或压力，制定面对它们的计划",
+                "迷路": "给自己时间思考人生方向，或寻求指导和建议",
+                "考试": "审视你对自己的期望是否合理，学习减轻完美主义压力",
+                "牙齿掉落": "关注自信心建设，或改善沟通方式",
+                "水": "练习情绪觉察，理解你的情感波动",
+                "蛇": "面对生活中的变化，将其视为成长机会",
+                "死亡": "接受某段经历或关系的结束，为新的开始做准备",
+                "婴儿": "培养新的想法或项目，给它们成长的空间",
+                "房子": "进行自我探索，了解你的内心需求",
+                "车辆": "思考你的人生方向，确保它与你的价值观一致",
+                "动物": "关注你的本能反应，理解它们的来源",
+                "裸体": "练习自我接纳，减少对他人评价的担忧",
+                "名人": "识别你欣赏的特质，思考如何在自己身上培养它们",
+                "食物": "关注情感和精神上的滋养，确保生活的平衡",
+                "大海": "探索你的潜意识，可以通过冥想或艺术创作",
+                "山": "设定清晰的目标，并制定实现它们的步骤",
+                "天空": "保持思想开放，探索新的可能性",
+                "黑暗": "面对你的恐惧，可能通过写作或谈话来处理",
+                "光明": "寻找生活中的积极面，培养乐观态度",
+                "钱": "反思你对价值和安全的定义，不仅限于物质层面",
+                "朋友": "关注你的社交关系，确保它们是健康和支持性的",
+                "家人": "思考你的根源和核心价值观，它们如何塑造了你",
+                "怪物": "识别并面对你压抑的情感或恐惧",
+                "战争": "寻找解决内心冲突的方法，可能需要调解或妥协",
+                "病毒": "识别生活中的担忧源，采取实际步骤减轻焦虑",
+                "口罩": "思考你在何时何地隐藏真实自我，以及原因",
+                "电脑": "关注数字健康，确保有足够的离线时间",
+                "手机": "评估你的沟通方式，确保它们满足你的需求"
+            };
+            
+            let result = "";
+            let usedSuggestions = [];
+            
+            // 从出现的符号中选择建议
+            for (const symbol of symbols) {
+                if (suggestions[symbol] && !usedSuggestions.includes(suggestions[symbol])) {
+                    result += `<li>${suggestions[symbol]}</li>`;
+                    usedSuggestions.push(suggestions[symbol]);
+                }
+                
+                // 限制建议数量
+                if (usedSuggestions.length >= 3) break;
+            }
+            
+            // 如果没有匹配到足够的建议，添加一些通用的
+            if (usedSuggestions.length < 3) {
+                const genericSuggestions = [
+                    "保持梦境日记，记录模式和主题",
+                    "在睡前进行放松活动，如冥想或深呼吸",
+                    "与信任的人分享你的梦境和感受",
+                    "通过艺术创作表达梦境中的情感和意象",
+                    "给自己足够的休息时间，保证睡眠质量"
+                ];
+                
+                for (const suggestion of genericSuggestions) {
+                    if (usedSuggestions.length >= 3) break;
+                    if (!usedSuggestions.includes(suggestion)) {
+                        result += `<li>${suggestion}</li>`;
+                        usedSuggestions.push(suggestion);
+                    }
+                }
+            }
+            
+            return result;
+        }
 
+        // 生成情绪映射
+        function generateEmotionMap(symbols, dreamText) {
+            const emotionMap = document.getElementById('emotionMap');
+            const emotionLegend = document.getElementById('emotionLegend');
+            const emotionChart = document.getElementById('emotionChart');
+            
+            // 情绪类别及其关联的符号
+            const emotionCategories = {
+                '喜悦/兴奋': ['飞翔', '光明', '婴儿', '舞蹈', '音乐', '宝藏'],
+                '恐惧/焦虑': ['掉落', '追逐', '考试', '怪物', '黑暗', '病毒', '战争'],
+                '困惑/不确定': ['迷路', '迷宫', '外星人', '口罩'],
+                '平静/内省': ['水', '天空', '树', '花', '雪'],
+                '转变/成长': ['蛇', '死亡', '桥', '门', '火'],
+                '渴望/追求': ['山', '飞机', '钱', '名人'],
+                '安全/归属': ['房子', '家人', '朋友', '食物']
+            };
+            
+            // 计算每个情绪类别的强度
+            const emotionIntensity = {};
+            let totalMatches = 0;
+            
+            for (const emotion in emotionCategories) {
+                let count = 0;
+                for (const symbol of symbols) {
+                    if (emotionCategories[emotion].includes(symbol)) {
+                        count++;
+                        totalMatches++;
+                    }
+                }
+                emotionIntensity[emotion] = count;
+            }
+            
+            // 如果没有匹配到任何情绪，添加一些基于文本分析的默认情绪
+            if (totalMatches === 0) {
+                // 简单的文本分析，检查一些情绪关键词
+                const joyWords = ['快乐', '开心', '兴奋', '美好', '喜悦', '笑'];
+                const fearWords = ['害怕', '恐惧', '焦虑', '担心', '紧张', '可怕'];
+                const confusionWords = ['困惑', '迷茫', '不解', '奇怪', '怪异', '不明白'];
+                const calmWords = ['平静', '安宁', '平和', '宁静', '舒适'];
+                const transformationWords = ['变化', '转变', '成长', '改变', '新的'];
+                
+                let joyCount = 0, fearCount = 0, confusionCount = 0, calmCount = 0, transformCount = 0;
+                
+                for (const word of joyWords) {
+                    if (dreamText.includes(word)) joyCount++;
+                }
+                
+                for (const word of fearWords) {
+                    if (dreamText.includes(word)) fearCount++;
+                }
+                
+                for (const word of confusionWords) {
+                    if (dreamText.includes(word)) confusionCount++;
+                }
+                
+                for (const word of calmWords) {
+                    if (dreamText.includes(word)) calmCount++;
+                }
+                
+                for (const word of transformationWords) {
+                    if (dreamText.includes(word)) transformCount++;
+                }
+                
+                emotionIntensity['喜悦/兴奋'] = joyCount || 1;
+                emotionIntensity['恐惧/焦虑'] = fearCount || 2; // 梦境中恐惧/焦虑较常见
+                emotionIntensity['困惑/不确定'] = confusionCount || 2;
+                emotionIntensity['平静/内省'] = calmCount || 1;
+                emotionIntensity['转变/成长'] = transformCount || 1;
+                emotionIntensity['渴望/追求'] = 1;
+                emotionIntensity['安全/归属'] = 1;
+                
+                totalMatches = 9; // 确保有一些默认值
+            }
+            
+            // 准备图表数据
+            const labels = Object.keys(emotionIntensity);
+            const data = Object.values(emotionIntensity);
+            const backgroundColors = [
+                'rgba(255, 99, 132, 0.7)',   // 红色 - 喜悦/兴奋
+                'rgba(54, 162, 235, 0.7)',   // 蓝色 - 恐惧/焦虑
+                'rgba(255, 206, 86, 0.7)',   // 黄色 - 困惑/不确定
+                'rgba(75, 192, 192, 0.7)',   // 青色 - 平静/内省
+                'rgba(153, 102, 255, 0.7)',  // 紫色 - 转变/成长
+                'rgba(255, 159, 64, 0.7)',   // 橙色 - 渴望/追求
+                'rgba(76, 175, 80, 0.7)'     // 绿色 - 安全/归属
+            ];
+            
+            // 创建图表
+            new Chart(emotionChart, {
+                type: 'polarArea',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const percentage = Math.round((value / totalMatches) * 100);
+                                    return `${label}: ${percentage}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 创建图例
+            emotionLegend.innerHTML = '';
+            labels.forEach((label, index) => {
+                if (emotionIntensity[label] > 0) {
+                    const percentage = Math.round((emotionIntensity[label] / totalMatches) * 100);
+                    const emotionTag = document.createElement('div');
+                    emotionTag.classList.add('emotion-tag');
+                    emotionTag.style.backgroundColor = backgroundColors[index];
+                    emotionTag.textContent = `${label}: ${percentage}%`;
+                    emotionLegend.appendChild(emotionTag);
+                }
+            });
+        }
+        
+        // 生成文化视角
+        function generateCulturalPerspective(symbols) {
+            const culturalPerspective = document.getElementById('culturalPerspective');
+            
+            // 不同文化对梦境符号的解读
+            const culturalViews = {
+                '飞翔': {
+                    '东方': '在中国传统文化中，飞翔常被视为精神升华和超脱世俗的象征。',
+                    '西方': '在西方心理学中，飞翔通常代表自由和超越限制的渴望。',
+                    '古埃及': '古埃及人认为飞翔的梦境与灵魂旅行有关。'
+                },
+                '水': {
+                    '东方': '在道家思想中，水象征柔韧和适应性，代表智慧的流动。',
+                    '西方': '荣格心理学将水视为潜意识的象征，反映内心深处的情感状态。',
+                    '印度': '在印度文化中，水被视为净化和重生的元素。'
+                },
+                '蛇': {
+                    '东方': '在中国文化中，蛇常与智慧和长寿联系在一起。',
+                    '西方': '在西方传统中，蛇可能象征诱惑或隐藏的危险。',
+                    '印度': '在印度教中，蛇（尤其是眼镜蛇）与灵性觉醒和昆达里尼能量有关。'
+                },
+                '死亡': {
+                    '东方': '在佛教思想中，死亡被视为生命循环的一部分，象征转变而非终结。',
+                    '西方': '在现代心理学中，死亡梦境通常被解读为某个生活阶段的结束和新开始。',
+                    '墨西哥': '在墨西哥文化中，死亡被视为生命的自然延续，而非恐惧的对象。'
+                },
+                '树': {
+                    '北欧': '在北欧神话中，世界树Yggdrasil连接九个世界，象征宇宙秩序。',
+                    '东方': '在中国文化中，树代表生命力、成长和家族延续。',
+                    '非洲': '在许多非洲文化中，树被视为祖先和社区的象征。'
+                }
+            };
+            
+            let content = '<p>不同文化对你梦中符号的解读：</p><div class="cultural-views">';
+            let hasContent = false;
+            
+            for (const symbol of symbols) {
+                if (culturalViews[symbol]) {
+                    hasContent = true;
+                    content += `<h4>${symbol}</h4><ul>`;
+                    for (const culture in culturalViews[symbol]) {
+                        content += `<li><strong>${culture}：</strong>${culturalViews[symbol][culture]}</li>`;
+                    }
+                    content += '</ul>';
+                }
+            }
+            
+            content += '</div>';
+            
+            // 如果没有匹配到任何文化视角，提供一个通用的解释
+            if (!hasContent) {
+                content = `
+                    <p>梦境解析在不同文化中有着丰富多样的传统：</p>
+                    <ul>
+                        <li><strong>东方传统：</strong>在中国和日本的文化中，梦境常被视为祖先或神灵的信息，或者是对未来的预示。</li>
+                        <li><strong>西方心理学：</strong>弗洛伊德认为梦是被压抑欲望的表达，而荣格则将梦视为集体无意识的象征语言。</li>
+                        <li><strong>古埃及：</strong>古埃及人相信梦境是神灵传递信息的方式，并建立了专门的梦境解析神庙。</li>
+                        <li><strong>原住民传统：</strong>许多原住民文化将梦境视为与精神世界沟通的桥梁，通过梦境寻求指引和治愈。</li>
+                    </ul>
+                    <p>你的梦境可能包含个人和文化的双重象征意义，反映了你独特的生活经历和文化背景。</p>
+                `;
+            }
+            
+            culturalPerspective.innerHTML = content;
+        }
+        
+        // 生成相关梦境模式
+        function generateRelatedPatterns(symbols) {
+            const relatedPatterns = document.getElementById('relatedPatterns');
+            
+            // 常见梦境模式及其关联的符号
+            const dreamPatterns = {
+                '追逐梦': ['追逐', '逃跑', '怪物', '黑暗', '迷路'],
+                '坠落梦': ['掉落', '飞翔', '高处', '悬崖', '电梯'],
+                '考试梦': ['考试', '学校', '迟到', '准备不足', '焦虑'],
+                '飞行梦': ['飞翔', '天空', '自由', '鸟', '超能力'],
+                '失去控制梦': ['车辆', '失控', '刹车失灵', '意外', '恐惧'],
+                '寻找梦': ['迷路', '寻找', '丢失', '钥匙', '重要物品'],
+                '变形梦': ['变化', '身体', '动物', '转变', '蛇'],
+                '水中梦': ['水', '游泳', '溺水', '大海', '河流'],
+                '暴露梦': ['裸体', '公共场合', '尴尬', '羞耻', '隐藏'],
+                '超能力梦': ['飞翔', '透视', '读心', '隐形', '力量']
+            };
+            
+            // 查找匹配的梦境模式
+            const matchedPatterns = [];
+            for (const pattern in dreamPatterns) {
+                let matchCount = 0;
+                for (const symbol of symbols) {
+                    if (dreamPatterns[pattern].includes(symbol)) {
+                        matchCount++;
+                    }
+                }
+                
+                // 如果匹配了至少一个符号，添加到匹配列表
+                if (matchCount > 0) {
+                    matchedPatterns.push({
+                        name: pattern,
+                        matchCount: matchCount,
+                        totalSymbols: dreamPatterns[pattern].length
+                    });
+                }
+            }
+            
+            // 按匹配度排序
+            matchedPatterns.sort((a, b) => b.matchCount - a.matchCount);
+            
+            // 生成内容
+            let content = '';
+            
+            if (matchedPatterns.length > 0) {
+                content += '<p>你的梦境与以下常见梦境模式相似：</p><ul>';
+                
+                // 最多显示3个最匹配的模式
+                const patternsToShow = matchedPatterns.slice(0, 3);
+                
+                for (const pattern of patternsToShow) {
+                    const matchPercentage = Math.round((pattern.matchCount / pattern.totalSymbols) * 100);
+                    content += `
+                        <li>
+                            <strong>${pattern.name}</strong> (匹配度: ${matchPercentage}%)
+                            <p>${getDreamPatternDescription(pattern.name)}</p>
+                        </li>
+                    `;
+                }
+                
+                content += '</ul>';
+            } else {
+                content = `
+                    <p>你的梦境似乎具有独特性，没有明显匹配常见的梦境模式。这可能表明：</p>
+                    <ul>
+                        <li>你的梦境反映了非常个人化的经历或情感</li>
+                        <li>你的潜意识正在以创造性的方式处理信息</li>
+                        <li>你的梦境可能结合了多种模式的元素，形成了独特的表达</li>
+                    </ul>
+                    <p>独特的梦境通常包含更丰富的个人象征意义，值得更深入地探索。</p>
+                `;
+            }
+            
+            relatedPatterns.innerHTML = content;
+        }
+        
+        // 获取梦境模式的描述
+        function getDreamPatternDescription(patternName) {
+            const descriptions = {
+                '追逐梦': '追逐梦是最常见的梦境类型之一，通常反映你在现实生活中感到被某种压力、责任或恐惧所追赶。这类梦境可能表明你正在逃避某个问题，而不是直面它。',
+                '坠落梦': '坠落梦通常与失去控制感或支持系统有关。这可能反映你在生活中某个领域感到不安全或不稳定，如工作、关系或自我认同方面的变化。',
+                '考试梦': '考试梦常见于各年龄段的人，即使已经离开学校多年。这类梦境通常反映对表现、准备不足或被评判的焦虑，可能与工作压力或生活中的挑战有关。',
+                '飞行梦': '飞行梦通常被视为积极的梦境，象征自由、超越限制和新视角。这类梦可能出现在你突破障碍或获得新自由的时期。',
+                '失去控制梦': '这类梦境中，你可能无法控制车辆或其他移动物体，象征你感觉生活的某些方面正在失控。这可能与重大决定或变化有关。',
+                '寻找梦': '寻找梦反映你在寻找生活中缺失的东西，可能是一个解决方案、答案、方向或自我认同的某个方面。',
+                '变形梦': '变形梦涉及身体或身份的变化，可能反映你正在经历的内在转变或对自我形象的关注。这类梦境常与个人成长和自我发现有关。',
+                '水中梦': '水中梦与情感状态密切相关。平静的水可能代表情绪平衡，而汹涌的水或溺水则可能表示情感压力或被情感淹没的感觉。',
+                '暴露梦': '在公共场合发现自己裸体或衣着不当的梦境通常与脆弱感、害怕被评判或担心真实自我被暴露有关。这可能反映社交焦虑或自信问题。',
+                '超能力梦': '拥有超能力的梦境可能反映你渴望更多的力量或控制感，或者表明你正在发现自己未被认可的能力和潜力。'
+            };
+            
+            return descriptions[patternName] || '这是一种常见的梦境模式，反映了特定的心理状态和情感需求。';
+        }
+        
         // 页面加载完成后执行
         document.addEventListener('DOMContentLoaded', function() {
             const dreamInput = document.getElementById('dreamInput');
@@ -404,6 +951,15 @@
                         symbolElement.textContent = symbol;
                         dreamSymbolsContainer.appendChild(symbolElement);
                     });
+                    
+                    // 生成情绪映射
+                    generateEmotionMap(result.symbols, dreamText);
+                    
+                    // 生成文化视角
+                    generateCulturalPerspective(result.symbols);
+                    
+                    // 生成相关梦境模式
+                    generateRelatedPatterns(result.symbols);
                     
                     // 隐藏加载动画，显示结果
                     loading.style.display = 'none';
