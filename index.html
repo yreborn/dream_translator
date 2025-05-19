@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>梦境翻译机</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Noto Serif SC', 'Times New Roman', serif;
+            background-color: #f5f2e9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path d="M30,50 Q50,30 70,50 T90,50" stroke="%23d4c9a8" fill="none" stroke-width="0.5"/></svg>');
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: #f9f6f0;
+            border: none;
+            box-shadow: 0 10px 30px rgba(101, 67, 33, 0.2);
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(90deg, #8b4513, #a0522d, #cd853f);
+        }
+
+        .ornament {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12,0 L15,9 L24,12 L15,15 L12,24 L9,15 L0,12 L9,9 Z" fill="%238b4513" opacity="0.2"/></svg>');
+            background-size: contain;
+        }
+
+        .ornament-tl {
+            top: 10px;
+            left: 10px;
+        }
+
+        .ornament-tr {
+            top: 10px;
+            right: 10px;
+            transform: rotate(90deg);
+        }
+
+        .ornament-bl {
+            bottom: 10px;
+            left: 10px;
+            transform: rotate(270deg);
+        }
+
+        .ornament-br {
+            bottom: 10px;
+            right: 10px;
+            transform: rotate(180deg);
+        }
+
+        h1 {
+            text-align: center;
+            color: #8b4513;
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #d4c9a8;
+            padding-bottom: 15px;
+        }
+
+        .dream-machine {
+            position: relative;
+            padding: 25px;
+            border: 1px solid #d4c9a8;
+            margin-bottom: 30px;
+            background-color: #fdfbf7;
+            box-shadow: inset 0 0 10px rgba(101, 67, 33, 0.1);
+        }
+
+        .dream-input {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            border: 1px solid #d4c9a8;
+            font-size: 1rem;
+            resize: none;
+            box-sizing: border-box;
+            font-family: inherit;
+            margin-bottom: 20px;
+            background-color: #fdfbf7;
+            transition: border-color 0.3s;
+            color: #5d4037;
+        }
+
+        .dream-input:focus {
+            outline: none;
+            border-color: #8b4513;
+            box-shadow: 0 0 10px rgba(139, 69, 19, 0.2);
+        }
+
+        .translate-btn {
+            display: block;
+            width: 200px;
+            margin: 0 auto;
+            padding: 12px 0;
+            background: #8b4513;
+            color: #f9f6f0;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: 500;
+            font-family: inherit;
+            letter-spacing: 1px;
+        }
+
+        .translate-btn:hover {
+            background-color: #a0522d;
+        }
+
+        .result-container {
+            margin-top: 30px;
+            padding: 25px;
+            background-color: #fdfbf7;
+            box-shadow: inset 0 0 10px rgba(101, 67, 33, 0.1);
+            border: 1px solid #d4c9a8;
+            display: none;
+        }
+
+        .result-title {
+            color: #8b4513;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            border-bottom: 1px solid #d4c9a8;
+            padding-bottom: 10px;
+        }
+
+        .result-content {
+            padding: 20px;
+            background-color: #fdfbf7;
+            border-left: 3px solid #8b4513;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #5d4037;
+        }
+
+        .dream-symbols {
+            margin-top: 25px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .symbol {
+            background-color: #f0e6d2;
+            padding: 8px 15px;
+            font-size: 0.95rem;
+            color: #8b4513;
+            border: 1px solid #d4c9a8;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loading-icon {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto;
+            border: 3px solid #d4c9a8;
+            border-top: 3px solid #8b4513;
+            border-radius: 50%;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #8b4513;
+            font-size: 0.9rem;
+            border-top: 1px solid #d4c9a8;
+            padding-top: 20px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                width: 95%;
+                padding: 25px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .translate-btn {
+                width: 180px;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* 古典装饰元素 */
+        .decorative-border {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .decorative-border-top {
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="20" viewBox="0 0 100 20"><path d="M0,10 Q25,0 50,10 T100,10" stroke="%238b4513" fill="none" stroke-width="1"/></svg>');
+            background-repeat: repeat-x;
+        }
+
+        .decorative-border-bottom {
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="20" viewBox="0 0 100 20"><path d="M0,10 Q25,20 50,10 T100,10" stroke="%238b4513" fill="none" stroke-width="1"/></svg>');
+            background-repeat: repeat-x;
+        }
+
+        .section-title {
+            color: #8b4513;
+            font-weight: 600;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.3rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ornament ornament-tl"></div>
+        <div class="ornament ornament-tr"></div>
+        <div class="ornament ornament-bl"></div>
+        <div class="ornament ornament-br"></div>
+        <div class="decorative-border decorative-border-top"></div>
+        <div class="decorative-border decorative-border-bottom"></div>
+        
+        <h1>梦境翻译机</h1>
+        
+        <div class="dream-machine">
+            <textarea class="dream-input" id="dreamInput" placeholder="请描述你的梦境内容...例如：我梦见自己在飞翔，但突然掉进了大海里"></textarea>
+            <button class="translate-btn" id="translateBtn">解析梦境</button>
+            
+            <div class="loading" id="loading">
+                <div class="loading-icon"></div>
+                <p style="color: #8b4513;">正在解析梦境中...</p>
+            </div>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+            <h2 class="result-title">梦境解析结果</h2>
+            <div class="result-content" id="resultContent"></div>
+            
+            <h3 class="section-title">梦境关键符号</h3>
+            <div class="dream-symbols" id="dreamSymbols"></div>
+        </div>
+        
+        <div class="footer">
+            梦境翻译机 © 2023 | 解析结果仅供娱乐参考
+        </div>
+    </div>
+
+    <script>
+        // 梦境解析数据库
+        const dreamSymbols = {
+            "飞翔": "代表自由、超越限制的渴望，或者对逃避现实的期望",
+            "掉落": "可能表示对失控的恐惧，或者在现实生活中感到不安全",
+            "追逐": "可能反映你在逃避某种压力或责任",
+            "迷路": "表示在生活中感到迷茫，不确定方向",
+            "考试": "反映对表现和评价的焦虑",
+            "牙齿掉落": "可能与自信心、形象或沟通问题有关",
+            "水": "象征情感状态，平静的水代表平和，汹涌的水代表情绪波动",
+            "蛇": "可能代表智慧、转变，或者潜在的威胁",
+            "死亡": "通常象征着转变、结束和新的开始，而非实际死亡",
+            "婴儿": "代表新的开始、创造力或责任",
+            "房子": "象征自我，不同房间可能代表人格的不同方面",
+            "车辆": "代表你在生活中的前进方向和控制感",
+            "动物": "通常代表本能或特定性格特征",
+            "裸体": "可能反映脆弱感或对暴露真实自我的恐惧",
+            "名人": "可能代表你渴望拥有的特质",
+            "食物": "可能与情感满足或精神滋养有关",
+            "大海": "象征潜意识、深层情感或未知领域",
+            "山": "代表挑战、成就或人生目标",
+            "天空": "象征可能性、自由和精神层面",
+            "黑暗": "可能代表未知、恐惧或潜意识",
+            "光明": "象征希望、启示或解决方案",
+            "钱": "可能与价值感、自尊或安全感有关",
+            "朋友": "反映社交关系或自我的不同方面",
+            "家人": "与根源、安全感和核心价值观有关",
+            "怪物": "可能代表内心恐惧或压抑的情感",
+            "战争": "可能象征内心冲突或外部压力",
+            "病毒": "可能代表担忧、恐惧或感觉受到威胁",
+            "口罩": "可能象征隐藏真实自我或保护自己",
+            "电脑": "可能与工作压力、信息过载或现代生活有关",
+            "手机": "可能反映沟通需求或对连接的渴望"
+        };
+
+        // 解析梦境的函数
+        function analyzeDream(dreamText) {
+            // 模拟API调用延迟
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // 分析文本中出现的关键词
+                    const foundSymbols = [];
+                    const symbolMeanings = [];
+                    
+                    for (const symbol in dreamSymbols) {
+                        if (dreamText.includes(symbol)) {
+                            foundSymbols.push(symbol);
+                            symbolMeanings.push(`<strong>${symbol}</strong>: ${dreamSymbols[symbol]}`);
+                        }
+                    }
+                    
+                    // 如果没有找到任何符号，提供一个通用解释
+                    if (foundSymbols.length === 0) {
+                        const generalAnalysis = "你的梦境似乎包含了一些非常个人化的元素。梦境通常反映我们的潜意识思想、情感和日常经历。考虑一下最近发生在你生活中的事件，以及它们如何影响你的情绪状态。";
+                        
+                        resolve({
+                            analysis: generalAnalysis,
+                            symbols: ["个人元素", "潜意识", "情感反映"]
+                        });
+                        return;
+                    }
+                    
+                    // 根据找到的符号生成解析
+                    let analysis = `你的梦境中出现了${foundSymbols.join("、")}等元素。\n\n`;
+                    analysis += symbolMeanings.join("\n\n");
+                    
+                    // 添加一些个性化的解释
+                    analysis += "\n\n这些符号组合在一起，可能反映了你当前的心理状态和情感需求。梦境是潜意识的表达，考虑这些象征如何与你的现实生活产生共鸣。";
+                    
+                    resolve({
+                        analysis: analysis,
+                        symbols: foundSymbols
+                    });
+                }, 2000); // 2秒延迟模拟处理时间
+            });
+        }
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            const dreamInput = document.getElementById('dreamInput');
+            const translateBtn = document.getElementById('translateBtn');
+            const loading = document.getElementById('loading');
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            const dreamSymbolsContainer = document.getElementById('dreamSymbols');
+            
+            translateBtn.addEventListener('click', async function() {
+                const dreamText = dreamInput.value.trim();
+                
+                if (!dreamText) {
+                    alert('请先描述你的梦境内容');
+                    return;
+                }
+                
+                // 显示加载动画
+                loading.style.display = 'block';
+                resultContainer.style.display = 'none';
+                
+                try {
+                    // 解析梦境
+                    const result = await analyzeDream(dreamText);
+                    
+                    // 显示结果
+                    resultContent.innerHTML = result.analysis.replace(/\n/g, '<br>');
+                    
+                    // 显示梦境符号
+                    dreamSymbolsContainer.innerHTML = '';
+                    result.symbols.forEach(symbol => {
+                        const symbolElement = document.createElement('div');
+                        symbolElement.classList.add('symbol');
+                        symbolElement.textContent = symbol;
+                        dreamSymbolsContainer.appendChild(symbolElement);
+                    });
+                    
+                    // 隐藏加载动画，显示结果
+                    loading.style.display = 'none';
+                    resultContainer.style.display = 'block';
+                    
+                    // 平滑滚动到结果区域
+                    resultContainer.scrollIntoView({ behavior: 'smooth' });
+                } catch (error) {
+                    console.error('解析梦境时出错:', error);
+                    alert('解析梦境时出错，请重试');
+                    loading.style.display = 'none';
+                }
+            });
+            
+            // 按Enter键也可以提交
+            dreamInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    translateBtn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
